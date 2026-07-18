@@ -1,0 +1,2097 @@
+<!doctype html>
+<html lang="id">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Absen Digital SMAN 2 Bengkalis</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+        body { font-family: 'DM Sans', sans-serif; }
+        .tab-active { border-bottom: 3px solid #f97316; color: #f97316; font-weight: 600; }
+        .save-indicator { animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .page { display: none; }
+        .page.active { display: block; }
+        #pin-screen { min-height: 100vh; }
+        .page-locked { display: flex !important; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; }
+        .page-locked-form { background: white; border-radius: 12px; padding: 32px; box-shadow: 0 8px 24px rgba(249, 115, 22, 0.15); max-width: 400px; width: 100%; text-align: center; }
+        .page-locked-form h3 { font-size: 20px; font-weight: 600; margin-bottom: 12px; color: #7c2d12; }
+        .page-locked-form p { font-size: 14px; color: #6b7280; margin-bottom: 20px; }
+        .page-locked-form input { width: 100%; border: 2px solid #fed7aa; border-radius: 8px; padding: 12px; font-size: 18px; letter-spacing: 3px; text-align: center; margin-bottom: 12px; }
+        .page-locked-form input:focus { border-color: #f97316; outline: none; }
+        .page-locked-form button { width: 100%; background: linear-gradient(135deg, #f97316, #fb923c); color: white; border: none; border-radius: 8px; padding: 12px; font-weight: 600; cursor: pointer; margin-bottom: 8px; }
+        .page-locked-form button:hover { background: linear-gradient(135deg, #ea580c, #f97316); }
+        .page-locked-form .error { color: #dc2626; font-size: 13px; margin-top: -8px; margin-bottom: 12px; }
+        .col-practice { background-color: #fde4a8 !important; }
+        .col-knowledge { background-color: #fef3c7 !important; }
+        .col-quiz { background-color: #fed7aa !important; }
+        .col-header-practice { background-color: #f59e0b !important; }
+        .col-header-knowledge { background-color: #fbbf24 !important; }
+        .col-header-quiz { background-color: #fcd34d !important; }
+        .profile-photo-wrapper { position: relative; display: inline-block; }
+        .profile-photo-edit { position: absolute; bottom: 0; right: 0; background: rgba(0,0,0,0.6); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+        .profile-photo-edit:hover { background: rgba(0,0,0,0.8); transform: scale(1.1); }
+  </style>
+ </head>
+ <body class="min-h-screen w-full flex flex-col justify-between" style="background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 25%, #fecaca 50%, #fca5a5 75%, #fbbf24 100%); position: relative;">
+  
+  <div>
+    <!-- Decorative sports elements -->
+    <div style="position: fixed; top: 10%; left: 5%; opacity: 0.08; font-size: 80px; transform: rotate(-20deg); pointer-events: none; user-select: none;">⚽</div>
+    <div style="position: fixed; bottom: 15%; right: 8%; opacity: 0.08; font-size: 100px; transform: rotate(25deg); pointer-events: none; user-select: none;">🏀</div>
+    <div style="position: fixed; top: 50%; left: 2%; opacity: 0.06; font-size: 70px; pointer-events: none; user-select: none;">🏐</div>
+
+    <!-- PIN SCREEN FOR GURU / SUPER ADMIN -->
+    <div id="pin-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-amber-900 to-red-900 hidden bg-opacity-95">
+     <div class="bg-white rounded-2xl shadow-2xl p-8 w-96 max-h-screen overflow-y-auto">
+      <button onclick="closePinScreen()" class="float-right text-gray-500 hover:text-gray-700 text-2xl leading-none">×</button>
+      <div class="clear-both text-center mb-4">
+       <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <i data-lucide="lock" class="w-8 h-8 text-orange-500"></i>
+       </div>
+       <h2 id="pin-title" class="font-bold mb-2 text-xl text-amber-900">Akses Guru</h2>
+       <p id="pin-subtitle" class="text-sm text-gray-500 mb-4">Silakan masukkan PIN Guru untuk melanjutkan</p>
+      </div>
+      
+      <div id="pin-login-section">
+       <input type="password" id="pin-input" maxlength="4" class="border-2 border-orange-300 rounded-lg px-4 py-3 text-center text-2xl tracking-widest w-full mb-3 focus:border-orange-600 focus:outline-none" placeholder="••••">
+       <p id="pin-error" class="text-red-500 text-sm hidden mb-2 text-center">PIN salah!</p>
+       <button onclick="checkPin()" class="w-full bg-gradient-to-r from-orange-700 to-red-700 text-white py-3 rounded-lg font-semibold hover:from-orange-800 hover:to-red-800 transition">Masuk</button>
+      </div>
+
+      <div id="pin-menu-section" class="hidden">
+       <div class="space-y-3">
+        <button onclick="showPinSettings()" class="w-full bg-gradient-to-r from-orange-600 to-orange-700 text-white py-2 rounded-lg font-semibold hover:from-orange-700 hover:to-orange-800 text-sm transition">⚙ Ubah PIN Utama</button> 
+        <button onclick="enterQuestionManagement()" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 text-sm transition">❓ Kelola Soal Quiz</button> 
+        <button onclick="enterMaterialManagement()" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 text-white py-2 rounded-lg font-semibold hover:from-indigo-700 hover:to-indigo-800 text-sm transition">📚 Kelola Materi</button> 
+        <button onclick="logoutPin()" class="w-full bg-red-600 text-white py-2 rounded-lg font-semibold hover:bg-red-700 text-sm transition">🚪 Keluar Panel Akses</button>
+       </div>
+      </div>
+
+      <!-- Edit PIN -->
+      <div id="pin-settings-section" class="hidden">
+       <h3 class="font-bold mb-3 text-sm text-amber-900">Ubah PIN Akses Guru</h3>
+       <input type="password" id="old-pin" placeholder="PIN lama" maxlength="4" class="border-2 border-amber-300 rounded-lg px-3 py-2 text-xl tracking-widest w-full mb-2 text-center focus:border-amber-600 focus:outline-none"> 
+       <input type="password" id="new-pin" placeholder="PIN baru" maxlength="4" class="border-2 border-amber-300 rounded-lg px-3 py-2 text-xl tracking-widest w-full mb-2 text-center focus:border-amber-600 focus:outline-none"> 
+       <input type="password" id="confirm-pin" placeholder="Konfirmasi PIN baru" maxlength="4" class="border-2 border-amber-300 rounded-lg px-3 py-2 text-xl tracking-widest w-full mb-2 text-center focus:border-amber-600 focus:outline-none">
+       <p id="pin-settings-error" class="text-red-500 text-xs hidden mb-2 text-center"></p>
+       <div class="flex gap-2">
+        <button onclick="savePinSettings()" class="flex-1 bg-gradient-to-r from-amber-700 to-red-900 text-white py-2 rounded-lg font-semibold text-sm transition">Simpan</button> 
+        <button onclick="showPinMenu()" class="flex-1 bg-gray-400 text-white py-2 rounded-lg font-semibold text-sm transition">Batal</button>
+       </div>
+      </div>
+
+      <!-- Kelola Soal -->
+      <div id="pin-question-section" class="hidden">
+       <h3 class="font-bold mb-3 text-sm text-amber-900">Kelola Soal</h3>
+       <div class="mb-3 flex gap-2 items-end flex-wrap">
+        <div class="flex-1 min-w-[150px]">
+         <label class="block text-xs font-medium mb-1">Kategori Materi</label>
+         <input type="text" id="q-group-input" placeholder="Sepak Bola, Senam, dll" class="border rounded px-2 py-1 text-xs w-full">
+        </div>
+        <button onclick="addQuestionFromPin()" class="bg-green-600 text-white px-3 py-1.5 rounded text-xs font-semibold hover:bg-green-700 transition">+ Tambah Soal</button>
+       </div>
+       
+       <div class="mb-3 border rounded p-2 bg-yellow-50">
+        <h4 class="text-xs font-bold mb-2">📅 Penjadwalan Quiz</h4>
+        <div class="grid grid-cols-2 gap-2 mb-2">
+         <div>
+          <label class="block text-[10px] text-gray-600">Mulai</label>
+          <input type="datetime-local" id="quiz-schedule-start" class="border rounded px-1 py-0.5 text-xs w-full">
+         </div>
+         <div>
+          <label class="block text-[10px] text-gray-600">Berakhir</label>
+          <input type="datetime-local" id="quiz-schedule-end" class="border rounded px-1 py-0.5 text-xs w-full">
+         </div>
+        </div>
+        <div class="mb-2">
+         <label class="block text-[10px] text-gray-600">Batas Waktu (menit)</label>
+         <input type="number" id="quiz-time-limit" min="1" max="180" placeholder="30" class="border rounded px-1 py-0.5 text-xs w-24">
+        </div>
+        <button onclick="saveScheduleSettings()" class="bg-gradient-to-r from-amber-600 to-amber-700 text-white px-3 py-1 rounded text-xs font-semibold hover:from-amber-700 transition">Simpan Jadwal</button> 
+        <span id="schedule-saved" class="text-green-600 text-xs hidden ml-2">✓ Tersimpan</span>
+       </div>
+
+       <!-- Question Form -->
+       <div id="pin-question-form" class="hidden border rounded p-2 mb-3 bg-gray-50 text-xs">
+        <input type="text" id="q-text-pin" placeholder="Pertanyaan Soal" class="border rounded px-2 py-1 text-xs w-full mb-1"> 
+        <input type="text" id="q-a-pin" placeholder="Pilihan A" class="border rounded px-2 py-1 text-xs w-full mb-1"> 
+        <input type="text" id="q-b-pin" placeholder="Pilihan B" class="border rounded px-2 py-1 text-xs w-full mb-1"> 
+        <input type="text" id="q-c-pin" placeholder="Pilihan C" class="border rounded px-2 py-1 text-xs w-full mb-1"> 
+        <input type="text" id="q-d-pin" placeholder="Pilihan D" class="border rounded px-2 py-1 text-xs w-full mb-1"> 
+        <input type="text" id="q-e-pin" placeholder="Pilihan E (opsional)" class="border rounded px-2 py-1 text-xs w-full mb-1">
+        <div class="flex gap-2 mb-2 items-center">
+         <select id="q-answer-pin" class="border rounded px-2 py-1 text-xs">
+          <option value="A">Jawaban Benar: A</option>
+          <option value="B">Jawaban Benar: B</option>
+          <option value="C">Jawaban Benar: C</option>
+          <option value="D">Jawaban Benar: D</option>
+          <option value="E">Jawaban Benar: E</option>
+         </select> 
+        </div>
+        <div class="flex gap-1 text-xs">
+         <button onclick="saveQuestionFromPin()" class="flex-1 bg-gradient-to-r from-amber-700 to-red-900 text-white px-2 py-1 rounded">Simpan</button> 
+         <button onclick="cancelQuestionFromPin()" class="flex-1 bg-gray-400 text-white px-2 py-1 rounded">Batal</button>
+        </div>
+       </div>
+
+       <div id="pin-question-list" class="space-y-2 mb-3 text-xs max-h-48 overflow-y-auto"></div>
+       <div class="flex gap-2 mb-2">
+        <button onclick="showDeleteAllQuestionsConfirm()" class="flex-1 bg-red-600 text-white px-2 py-1 rounded text-xs font-semibold hover:bg-red-700 transition">🗑 Hapus Semua Soal</button>
+       </div>
+       <button onclick="showPinMenu()" class="w-full bg-gray-400 text-white px-2 py-1 rounded text-xs font-semibold hover:bg-gray-500 transition">Kembali ke Menu</button>
+      </div>
+
+      <!-- Kelola Materi -->
+      <div id="pin-material-section" class="hidden">
+       <h3 class="font-bold mb-3 text-sm text-amber-900">Kelola Materi</h3>
+       <div class="mb-3 flex gap-2 items-end">
+        <button onclick="addMaterialFromPin()" class="bg-green-600 text-white px-3 py-1.5 rounded text-xs font-semibold hover:bg-green-700 transition w-full">+ Tambah Materi Baru</button>
+       </div>
+       
+       <div id="pin-material-form" class="hidden border rounded p-2 mb-3 bg-gray-50 text-xs">
+        <input type="text" id="m-title-pin" placeholder="Judul Materi" class="border rounded px-2 py-1 text-xs w-full mb-1"> 
+        <textarea id="m-content-pin" placeholder="Konten atau isi materi pembelajaran (bisa paragraf panjang)" class="border rounded px-2 py-1 text-xs w-full mb-1 h-32 resize-none"></textarea>
+        <div class="flex gap-1 text-xs">
+         <button onclick="saveMaterialFromPin()" class="flex-1 bg-gradient-to-r from-amber-700 to-red-900 text-white px-2 py-1 rounded">Simpan</button> 
+         <button onclick="cancelMaterialFromPin()" class="flex-1 bg-gray-400 text-white px-2 py-1 rounded">Batal</button>
+        </div>
+       </div>
+
+       <div id="pin-material-list" class="space-y-2 mb-3 text-xs max-h-48 overflow-y-auto"></div>
+       <div class="flex gap-2">
+        <button onclick="deleteAllMaterialsConfirm()" class="flex-1 bg-red-600 text-white px-2 py-1.5 rounded text-xs font-semibold hover:bg-red-700 transition">🗑 Hapus Semua Materi</button>
+       </div>
+       <button onclick="showPinMenu()" class="w-full mt-2 bg-gray-400 text-white px-2 py-1 rounded text-xs font-semibold hover:bg-gray-500 transition">Kembali ke Menu</button>
+      </div>
+     </div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="p-4 shadow-lg relative z-10" style="background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); border-bottom: 4px solid #f97316;">
+     <div class="max-w-6xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+      <div class="flex items-center gap-4">
+       <div class="profile-photo-wrapper">
+        <img id="school-logo" src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=250&auto=format&fit=crop" class="w-16 h-16 rounded-full object-cover shadow-md border-4 border-white" alt="School Logo">
+        <div class="profile-photo-edit" onclick="showProfilePhotoModal()">📷</div>
+       </div>
+       <div>
+        <h1 id="school-name" class="font-bold text-white text-lg md:text-2xl">SMAN 2 Bengkalis</h1>
+        <p id="teacher-info" class="text-xs md:text-sm text-blue-100">Aplikasi Absensi &amp; Penilaian Digital PJOK</p>
+       </div>
+      </div>
+      <!-- Quick Access Guru -->
+      <button onclick="openGuruAccess()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1 shadow transition">
+       <i data-lucide="lock" class="w-4 h-4"></i> Akses Panel Guru
+      </button>
+     </div>
+    </header>
+
+    <!-- NAVIGATION -->
+    <nav class="max-w-6xl mx-auto border-b bg-white bg-opacity-95 shadow-md relative z-10">
+     <div class="flex overflow-x-auto">
+      <button class="tab-btn tab-active px-5 py-3 text-sm whitespace-nowrap transition" onclick="switchPage(0)">📋 Absensi</button> 
+      <button class="tab-btn px-5 py-3 text-sm whitespace-nowrap transition" onclick="switchPage(1)">📊 Rekap Absen</button> 
+      <button class="tab-btn px-5 py-3 text-sm whitespace-nowrap transition" onclick="switchPage(2)">⭐ Nilai</button> 
+      <button class="tab-btn px-5 py-3 text-sm whitespace-nowrap transition" onclick="switchPage(3)">❓ Soal Quiz</button> 
+      <button class="tab-btn px-5 py-3 text-sm whitespace-nowrap transition" onclick="switchPage(4)">📚 Materi</button> 
+      <button class="tab-btn px-5 py-3 text-sm whitespace-nowrap transition" onclick="switchPage(5)">📖 Jurnal Mengajar</button>
+     </div>
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-6xl mx-auto p-4 relative z-10">
+     
+     <!-- PAGE 0: ABSENSI -->
+     <div class="page active" id="page-0">
+      <div id="attendance-locked" class="page-locked">
+       <div class="page-locked-form">
+        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+         <i data-lucide="lock" class="w-6 h-6 text-orange-600"></i>
+        </div>
+        <h3>Akses Halaman Absensi</h3>
+        <p>Masukkan PIN Guru untuk melakukan absensi</p>
+        <input type="password" id="attendance-pin-input" maxlength="4" placeholder="••••">
+        <p id="attendance-pin-error" class="error hidden">PIN salah!</p>
+        <button onclick="checkAttendancePin()">Masuk</button>
+       </div>
+      </div>
+      
+      <div id="attendance-content" class="hidden bg-white p-4 md:p-6 rounded-2xl shadow-xl">
+       <div class="flex flex-wrap gap-3 items-end justify-between mb-4 pb-4 border-b border-gray-100">
+        <div class="flex flex-wrap gap-3 items-end">
+         <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Kelas</label> 
+          <div class="flex gap-1.5 items-center">
+           <select id="class-select" onchange="loadAttendance()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
+            <!-- Opsi kelas akan dimuat secara dinamis dari JavaScript -->
+           </select>
+           <button class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg text-sm transition" onclick="openClassManagementModal()" title="Kelola/Edit Daftar Kelas">
+            <i data-lucide="edit-2" class="w-4 h-4"></i>
+           </button>
+           <button class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg text-sm transition" onclick="addNewClassPrompt()" title="Tambah Kelas Baru">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+           </button>
+          </div>
+         </div>
+         <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Tanggal Absensi</label> 
+          <input type="date" id="attendance-date" onchange="loadAttendance()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
+         </div>
+         <button class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition" onclick="setAllHadir()">Hadir Semua</button> 
+         <button class="bg-gradient-to-r from-orange-500 to-red-500 hover:opacity-90 text-white px-4 py-2 rounded-lg text-sm font-medium transition" onclick="saveAttendance()">Simpan Absen</button>
+         <span id="save-indicator" class="hidden save-indicator text-green-600 text-sm font-medium flex items-center gap-1">✓ Tersimpan</span>
+        </div>
+        
+        <!-- Tombol Aksi Kanan Halaman Absensi -->
+        <div class="flex gap-2">
+         <button class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1" onclick="openSettingsPinModal()">
+          <i data-lucide="settings" class="w-4.5 h-4.5"></i> Pengaturan PIN
+         </button>
+         <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1" onclick="lockAttendance()">
+          <i data-lucide="log-out" class="w-4.5 h-4.5"></i> Keluar
+         </button>
+        </div>
+       </div>
+       
+       <div class="mb-4 bg-orange-50 p-4 rounded-xl border border-orange-100 flex flex-wrap gap-2 items-center justify-between">
+        <div class="flex-1 min-w-[200px] flex gap-2">
+         <input type="text" id="new-student-name" placeholder="Nama siswa baru..." class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-orange-500"> 
+         <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition" onclick="addStudent()">Tambah Siswa</button>
+        </div>
+        <div class="text-xs text-amber-900 font-medium">Atau import data siswa via file Excel.</div>
+        <label class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition">
+         <span>📂 Import Excel</span>
+         <input type="file" id="excel-import" accept=".xlsx,.xls" class="hidden" onchange="importStudentData(event)">
+        </label>
+       </div>
+
+       <div class="overflow-x-auto rounded-xl border border-gray-200">
+        <table class="w-full text-sm border-collapse" id="attendance-table">
+         <thead>
+          <tr class="bg-gray-100 border-b border-gray-200 text-gray-700">
+           <th class="p-3 text-left w-12">No</th>
+           <th class="p-3 text-left">Nama Lengkap Siswa</th>
+           <th class="p-3 text-center w-14">H</th>
+           <th class="p-3 text-center w-14">S</th>
+           <th class="p-3 text-center w-14">I</th>
+           <th class="p-3 text-center w-14">A</th>
+           <th class="p-3 text-center w-14">TS</th>
+           <th class="p-3 text-left w-48">Keterangan Tambahan</th>
+           <th class="p-3 text-center w-20">Aksi</th>
+          </tr>
+         </thead>
+         <tbody id="attendance-body" class="divide-y divide-gray-100"></tbody>
+        </table>
+       </div>
+      </div>
+     </div>
+
+     <!-- PAGE 1: REKAP ABSEN -->
+     <div class="page" id="page-1">
+      <div id="recap-locked" class="page-locked">
+       <div class="page-locked-form">
+        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+         <i data-lucide="lock" class="w-6 h-6 text-blue-800"></i>
+        </div>
+        <h3>Akses Halaman Rekap</h3>
+        <p>Masukkan PIN Guru untuk melihat rekapitulasi absensi</p>
+        <input type="password" id="recap-pin-input" maxlength="4" placeholder="••••">
+        <p id="recap-pin-error" class="error hidden">PIN salah!</p>
+        <button onclick="checkRecapPin()" class="bg-blue-600">Masuk</button>
+       </div>
+      </div>
+      
+      <div id="recap-content" class="hidden bg-white p-4 md:p-6 rounded-2xl shadow-xl">
+       <div class="flex flex-wrap gap-3 items-end justify-between mb-4 pb-4 border-b border-gray-100">
+        <div class="flex flex-wrap gap-3 items-end">
+         <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Kelas</label>
+          <select id="recap-class" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none" onchange="renderRecap()">
+           <!-- Opsi kelas dinamis -->
+          </select>
+         </div>
+         <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih Bulan</label>
+          <input type="month" id="recap-month" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none" onchange="renderRecap()">
+         </div>
+         <button class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm font-semibold transition" onclick="downloadRecapAbsen()">📥 Download Excel</button>
+        </div>
+        
+        <!-- Tombol Aksi Kanan Halaman Rekap -->
+        <div class="flex gap-2">
+         <button class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1" onclick="openSettingsPinModal()">
+          <i data-lucide="settings" class="w-4.5 h-4.5"></i> Pengaturan PIN
+         </button>
+         <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1" onclick="lockRecap()">
+          <i data-lucide="log-out" class="w-4.5 h-4.5"></i> Keluar
+         </button>
+        </div>
+       </div>
+
+       <div class="overflow-x-auto rounded-xl border border-gray-200">
+        <table class="w-full text-sm border-collapse" id="recap-table">
+         <thead>
+          <tr class="bg-gray-100 border-b border-gray-200 text-gray-700">
+           <th class="p-3 text-left w-12">No</th>
+           <th class="p-3 text-left">Nama Lengkap Siswa</th>
+           <th class="p-3 text-center bg-green-50 text-green-700 w-16">Hadir (H)</th>
+           <th class="p-3 text-center bg-blue-50 text-blue-700 w-16">Sakit (S)</th>
+           <th class="p-3 text-center bg-yellow-50 text-yellow-700 w-16">Izin (I)</th>
+           <th class="p-3 text-center bg-red-50 text-red-700 w-16">Alfa (A)</th>
+           <th class="p-3 text-center bg-purple-50 text-purple-700 w-24">Terlambat Sekali (TS)</th>
+           <th class="p-3 text-center w-20">Aksi</th>
+          </tr>
+         </thead>
+         <tbody id="recap-body" class="divide-y divide-gray-100"></tbody>
+        </table>
+       </div>
+      </div>
+     </div>
+
+     <!-- PAGE 2: PENILAIAN -->
+     <div class="page" id="page-2">
+      <div id="penilaian-locked" class="page-locked">
+       <div class="page-locked-form">
+        <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+         <i data-lucide="lock" class="w-6 h-6 text-orange-600"></i>
+        </div>
+        <h3>Akses Halaman Penilaian</h3>
+        <p>Masukkan PIN Guru untuk melakukan penilaian siswa</p>
+        <input type="password" id="penilaian-pin-input" maxlength="4" placeholder="••••">
+        <p id="penilaian-pin-error" class="error hidden">PIN salah!</p>
+        <button onclick="checkPenilaianPin()">Masuk</button>
+       </div>
+      </div>
+      
+      <div id="penilaian-content" class="hidden bg-white p-4 md:p-6 rounded-2xl shadow-xl">
+       <div class="flex flex-wrap gap-3 items-end justify-between mb-4 pb-4 border-b border-gray-100 font-medium">
+        <div class="flex flex-wrap gap-3 items-end">
+         <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Kelas</label>
+          <select id="score-class" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none" onchange="renderScores()">
+           <!-- Opsi kelas dinamis -->
+          </select>
+         </div>
+         
+         <!-- Tombol Tambah & Hapus Kategori Kolom -->
+         <button class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1 shadow" onclick="addPracticeColumn()">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i> + Praktik
+         </button>
+         <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1 shadow" onclick="removePracticeColumn()">
+          <i data-lucide="minus-circle" class="w-4 h-4"></i> - Praktik
+         </button>
+         
+         <button class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1 shadow" onclick="addKnowledgeColumn()">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i> + Pengetahuan
+         </button>
+         <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1 shadow" onclick="removeKnowledgeColumn()">
+          <i data-lucide="minus-circle" class="w-4 h-4"></i> - Pengetahuan
+         </button>
+         
+         <!-- Tombol Edit Nilai (Toggling Inputs) -->
+         <button id="btn-edit-scores" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1 shadow" onclick="toggleEditScores()">
+          <i data-lucide="edit-3" class="w-4 h-4"></i> Edit Nilai
+         </button>
+         
+         <button class="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition" onclick="saveScores()">💾 Simpan Semua Nilai</button>
+         <button class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm font-semibold transition" onclick="downloadScores()">📥 Download Rekap Nilai</button>
+        </div>
+        
+        <!-- Tombol Aksi Kanan Halaman Penilaian -->
+        <div class="flex gap-2">
+         <button class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1" onclick="openSettingsPinModal()">
+          <i data-lucide="settings" class="w-4.5 h-4.5"></i> Pengaturan PIN
+         </button>
+         <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1" onclick="lockPenilaian()">
+          <i data-lucide="log-out" class="w-4.5 h-4.5"></i> Keluar
+         </button>
+        </div>
+       </div>
+
+       <div class="overflow-x-auto rounded-xl border border-gray-200">
+        <table class="w-full text-xs border-collapse" id="score-table">
+         <thead id="score-thead" class="text-gray-700"></thead>
+         <tbody id="score-body" class="divide-y divide-gray-100"></tbody>
+        </table>
+       </div>
+      </div>
+     </div>
+
+     <!-- PAGE 3: SOAL / QUIZ -->
+     <div class="page" id="page-3">
+      <div class="bg-white p-4 md:p-6 rounded-2xl shadow-xl mb-4">
+       <h2 class="font-bold text-amber-900 text-xl mb-2 flex items-center gap-2">✍️ Menu Quiz Siswa</h2>
+       <p class="text-sm text-gray-500 mb-4">Silakan pilih nama dan kelas Anda untuk memulai pengerjaan quiz PJOK.</p>
+       
+       <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end mb-4">
+        <div>
+         <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih Kelas</label>
+         <select id="quiz-class" onchange="updateQuizStudents()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none">
+          <!-- Opsi kelas dinamis -->
+         </select>
+        </div>
+        <div>
+         <label class="block text-xs font-semibold text-gray-600 mb-1">Nama Siswa</label>
+         <select id="quiz-student" class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none">
+          <option value="">-- Pilih Siswa --</option>
+         </select>
+        </div>
+        <div>
+         <label class="block text-xs font-semibold text-gray-600 mb-1">Kategori Soal</label>
+         <select id="quiz-group" class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none">
+          <option value="">Semua Kategori</option>
+         </select>
+        </div>
+        <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition" onclick="startQuiz()">Mulai Kerjakan Quiz</button>
+       </div>
+
+       <div id="quiz-timer-area" class="hidden bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg font-bold text-center text-lg mb-4">
+        Sisa Waktu: <span id="quiz-timer">00:00</span>
+       </div>
+
+       <!-- QUIZ WORKPLACE -->
+       <div id="quiz-area" class="hidden bg-amber-50 rounded-xl p-4 md:p-6 border border-amber-100"></div>
+      </div>
+     </div>
+
+     <!-- PAGE 4: MATERI -->
+     <div class="page" id="page-4">
+      <div class="bg-white p-4 md:p-6 rounded-2xl shadow-xl">
+       <h2 class="font-bold text-amber-900 text-xl mb-4">📚 Materi Pembelajaran PJOK</h2>
+       <div class="flex gap-3 mb-4 flex-wrap items-end justify-between">
+        <div class="flex-1 min-w-[200px]">
+         <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih Judul Materi</label> 
+         <select id="materi-select" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm w-full focus:outline-none" onchange="selectMaterial()">
+          <option value="">-- Pilih Materi Pembelajaran --</option>
+         </select>
+        </div>
+       </div>
+       
+       <div id="material-content" class="hidden bg-orange-50 border-2 border-orange-200 rounded-xl p-6 md:p-8 shadow-inner">
+        <h3 id="material-title" class="font-bold text-2xl mb-4 text-orange-900"></h3>
+        <div id="material-body" class="text-gray-700 leading-relaxed text-base space-y-4 whitespace-pre-wrap"></div>
+       </div>
+       
+       <div id="material-empty" class="text-center text-gray-400 py-16 bg-white rounded-xl border-2 border-dashed border-gray-200">
+        <i data-lucide="book-open" class="w-12 h-12 mx-auto mb-2 text-gray-300"></i>
+        <p class="text-base font-medium">Pilih salah satu judul materi di atas untuk menampilkan konten pembelajaran</p>
+       </div>
+      </div>
+     </div>
+
+     <!-- PAGE 5: JURNAL MENGAJAR -->
+     <div class="page" id="page-5">
+      <div id="journal-locked" class="page-locked">
+       <div class="page-locked-form">
+        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+         <i data-lucide="lock" class="w-6 h-6 text-orange-600"></i>
+        </div>
+        <h3>Akses Halaman Jurnal Mengajar</h3>
+        <p>Masukkan PIN Guru untuk mengakses Jurnal harian mengajar</p>
+        <input type="password" id="journal-pin-input" maxlength="4" placeholder="••••">
+        <p id="journal-pin-error" class="error hidden">PIN salah!</p>
+        <button onclick="checkJournalPin()">Masuk</button>
+       </div>
+      </div>
+      
+      <div id="journal-content" class="hidden bg-white p-4 md:p-6 rounded-2xl shadow-xl">
+       <h2 class="font-bold text-amber-900 text-xl mb-4">📖 Pengisian Jurnal Mengajar Guru</h2>
+       
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        <div>
+         <label class="block text-xs font-semibold text-gray-600 mb-1">Nama Guru</label>
+         <input id="journal-name" class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none" placeholder="Contoh: Drs. Joni, M.Pd">
+        </div>
+        <div>
+         <label class="block text-xs font-semibold text-gray-600 mb-1">Mata Pelajaran</label>
+         <input id="journal-subject" class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none" value="PJOK" placeholder="Mapel">
+        </div>
+        <div>
+         <label class="block text-xs font-semibold text-gray-600 mb-1">Semester</label>
+         <input id="journal-semester" class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none" placeholder="Ganjil / Genap">
+        </div>
+        <div>
+         <label class="block text-xs font-semibold text-gray-600 mb-1">Hari / Tanggal</label>
+         <input id="journal-date" type="date" class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none">
+        </div>
+        <div>
+         <label class="block text-xs font-semibold text-gray-600 mb-1">Kelas</label>
+         <select id="journal-class" class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none">
+          <!-- Opsi kelas dinamis -->
+         </select>
+        </div>
+        <div>
+         <label class="block text-xs font-semibold text-gray-600 mb-1">Jam Pelajaran Ke-</label>
+         <input id="journal-period" class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none" placeholder="Contoh: 1 - 3">
+        </div>
+       </div>
+
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        <div>
+         <label class="block text-xs font-semibold text-gray-600 mb-1">Bahasan Materi Pokok</label>
+         <textarea id="journal-topic" class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none h-24 resize-none" placeholder="Uraikan isi materi..."></textarea>
+        </div>
+        <div>
+         <label class="block text-xs font-semibold text-gray-600 mb-1">Hambatan Kegiatan Pembelajaran</label>
+         <textarea id="journal-obstacles" class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none h-24 resize-none" placeholder="Tulis kendala yang dialami..."></textarea>
+        </div>
+        <div>
+         <label class="block text-xs font-semibold text-gray-600 mb-1">Pemecahan Masalah / Solusi</label>
+         <textarea id="journal-solution" class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none h-24 resize-none" placeholder="Tulis solusi/tindak lanjut..."></textarea>
+        </div>
+       </div>
+
+       <!-- Jurnal Aksi Menengah Bawah -->
+       <div class="flex gap-2 mb-6 justify-end flex-wrap">
+        <button onclick="saveJournalEntry()" class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-5 py-2 rounded-lg text-sm font-semibold transition">Simpan Jurnal</button>
+        <button onclick="downloadJournalExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-semibold transition">📥 Download Rekap Jurnal</button>
+        <button class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1" onclick="openSettingsPinModal()">
+         <i data-lucide="settings" class="w-4.5 h-4.5"></i> Pengaturan PIN
+        </button>
+        <button onclick="lockJournal()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1">
+         <i data-lucide="log-out" class="w-4.5 h-4.5"></i> Keluar
+        </button>
+       </div>
+
+       <h3 class="font-bold text-gray-700 mb-2">Riwayat Jurnal Mengajar</h3>
+       <div class="overflow-x-auto rounded-xl border border-gray-200">
+        <table class="w-full text-xs text-left border-collapse" id="journal-table">
+         <thead>
+          <tr class="bg-gray-100 text-gray-700 border-b border-gray-200">
+           <th class="p-3 w-10">No</th>
+           <th class="p-3 w-28">Tanggal</th>
+           <th class="p-3 w-20">Kelas</th>
+           <th class="p-3 w-16">Jam</th>
+           <th class="p-3">Materi Pokok</th>
+           <th class="p-3">Hambatan</th>
+           <th class="p-3">Solusi</th>
+           <th class="p-3 w-20 text-center">Aksi</th>
+          </tr>
+         </thead>
+         <tbody id="journal-history-body" class="divide-y divide-gray-100"></tbody>
+        </table>
+       </div>
+      </div>
+     </div>
+
+    </main>
+
+    <!-- MODAL EDIT FOTO LOGO -->
+    <div id="photo-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+     <div class="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+      <h3 class="font-bold text-lg text-amber-900 mb-3">Ubah Logo / Foto Sekolah</h3>
+      <p class="text-xs text-gray-500 mb-4">Tempelkan link/URL foto baru yang valid di bawah ini:</p>
+      <input type="text" id="photo-url-input" class="border border-gray-300 rounded-lg px-3 py-2 w-full text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="https://contoh.com/gambar.png">
+      <div class="flex gap-2 text-sm font-semibold">
+       <button onclick="savePhotoUrl()" class="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white py-2 rounded-lg transition">Simpan</button>
+       <button onclick="closePhotoModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 rounded-lg transition">Batal</button>
+      </div>
+     </div>
+    </div>
+
+    <!-- MODAL PENGATURAN PIN UTAMA (Global PIN Settings) -->
+    <div id="settings-pin-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+     <div class="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl relative">
+      <button onclick="closeSettingsPinModal()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl font-bold leading-none">×</button>
+      <h3 class="font-bold text-lg text-amber-900 mb-3 flex items-center gap-2">
+       <i data-lucide="settings" class="w-5 h-5 text-orange-500"></i> Pengaturan PIN Guru
+      </h3>
+      <p class="text-xs text-gray-500 mb-4">Ubah PIN keamanan utama untuk akses semua halaman administrasi guru:</p>
+      
+      <div class="space-y-3">
+       <div>
+        <label class="block text-[11px] font-semibold text-gray-600 mb-1">PIN Lama</label>
+        <input type="password" id="global-old-pin" placeholder="••••" maxlength="4" class="border border-gray-300 rounded-lg px-3 py-2 w-full text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-orange-500">
+       </div>
+       <div>
+        <label class="block text-[11px] font-semibold text-gray-600 mb-1">PIN Baru (4 Digit)</label>
+        <input type="password" id="global-new-pin" placeholder="••••" maxlength="4" class="border border-gray-300 rounded-lg px-3 py-2 w-full text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-orange-500">
+       </div>
+       <div>
+        <label class="block text-[11px] font-semibold text-gray-600 mb-1">Konfirmasi PIN Baru</label>
+        <input type="password" id="global-confirm-pin" placeholder="••••" maxlength="4" class="border border-gray-300 rounded-lg px-3 py-2 w-full text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-orange-500">
+       </div>
+      </div>
+      
+      <p id="global-pin-error-msg" class="text-red-600 text-xs text-center mt-3 hidden font-semibold"></p>
+      
+      <div class="flex gap-2 text-sm font-semibold mt-5">
+       <button onclick="saveGlobalPinChange()" class="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white py-2.5 rounded-lg transition hover:opacity-90">Simpan Perubahan</button>
+       <button onclick="closeSettingsPinModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2.5 rounded-lg transition">Batal</button>
+      </div>
+     </div>
+    </div>
+
+    <!-- MODAL KELOLA DAFTAR KELAS -->
+    <div id="class-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+     <div class="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl relative">
+      <button onclick="closeClassModal()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl font-bold leading-none">×</button>
+      <h3 class="font-bold text-lg text-amber-900 mb-3 flex items-center gap-2">
+       <i data-lucide="edit-3" class="w-5 h-5 text-orange-500"></i> Kelola Daftar Kelas
+      </h3>
+      <p class="text-xs text-gray-500 mb-4">Edit nama kelas atau hapus kelas yang ada dari daftar sistem:</p>
+      
+      <div id="class-list-container" class="space-y-2 max-h-60 overflow-y-auto mb-4 border border-gray-100 p-2 rounded-lg bg-gray-50">
+       <!-- Daftar kelas dirender secara dinamis lewat JS -->
+      </div>
+
+      <div class="flex gap-2 text-xs font-semibold">
+       <button onclick="addNewClassPrompt()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg transition flex items-center justify-center gap-1">
+        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Tambah Kelas
+       </button>
+       <button onclick="closeClassModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2.5 rounded-lg transition">Selesai</button>
+      </div>
+     </div>
+    </div>
+  </div>
+
+  <!-- WATERMARK FOOTER -->
+  <footer class="w-full text-center py-6 text-xs text-blue-900/80 font-bold tracking-wide relative z-10 select-none pointer-events-none mt-auto">
+    <p>Created By Cikgu Dasril Amri</p>
+  </footer>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // --- DATABASE / STATE INITIALIZATION (Local Storage Fallback) ---
+    const defaultStudents = [
+      { name: "Ahmad Fauzi", class: "XII.F" },
+      { name: "Budi Santoso", class: "XII.F" },
+      { name: "Citra Lestari", class: "XII.G" },
+      { name: "Dewi Safitri", class: "XII.G" },
+      { name: "Eko Prasetyo", class: "XII.H" },
+      { name: "Fitri Handayani", class: "XII.H" }
+    ];
+
+    const defaultQuestions = [
+      {
+        id: "q1",
+        group: "Sepak Bola",
+        text: "Berapa jumlah pemain dalam satu tim sepak bola?",
+        choices: { A: "11 Orang", B: "12 Orang", C: "10 Orang", D: "9 Orang", E: "5 Orang" },
+        answer: "A"
+      },
+      {
+        id: "q2",
+        group: "Kebugaran Jasmani",
+        text: "Kemampuan tubuh untuk melakukan aktivitas sehari-hari tanpa kelelahan berlebih disebut...",
+        choices: { A: "Kekuatan", B: "Kelenturan", C: "Kebugaran Jasmani", D: "Keseimbangan", E: "Kelincahan" },
+        answer: "C"
+      }
+    ];
+
+    const defaultMaterials = [
+      {
+        id: "m1",
+        title: "Kebugaran Jasmani",
+        content: "Kebugaran jasmani adalah kesanggupan dan kemampuan tubuh melakukan penyesuaian terhadap pembebanan fisik yang diberikan kepadanya (dari kerja yang dilakukan sehari-hari) tanpa menimbulkan kelelahan berlebih.\n\nKomponen Kebugaran Jasmani meliputi:\n1. Kekuatan (Strength)\n2. Daya Tahan (Endurance)\n3. Daya Otot (Muscular Power)\n4. Kecepatan (Speed)\n5. Kelenturan (Flexibility)\n6. Kelincahan (Agility)"
+      },
+      {
+        id: "m2",
+        title: "Sepak Bola dan Teknik Dasarnya",
+        content: "Sepak bola merupakan permainan beregu yang terdiri atas 11 pemain di lapangan. Tujuan utama permainan ini adalah memasukkan bola ke gawang lawan sebanyak-banyaknya.\n\nBeberapa teknik dasar sepak bola:\n1. Passing (Mengoper bola)\n2. Dribbling (Menggiring bola)\n3. Shooting (Menembak bola)\n4. Heading (Menyundul bola)\n5. Controlling (Mengontrol bola)"
+      }
+    ];
+
+    // State Variables
+    let students = JSON.parse(localStorage.getItem('sma2_students')) || defaultStudents;
+    let attendanceData = JSON.parse(localStorage.getItem('sma2_attendance')) || {};
+    let scoresData = JSON.parse(localStorage.getItem('sma2_scores')) || {};
+    let questions = JSON.parse(localStorage.getItem('sma2_questions')) || defaultQuestions;
+    let materials = JSON.parse(localStorage.getItem('sma2_materials')) || defaultMaterials;
+    let journals = JSON.parse(localStorage.getItem('sma2_journals')) || [];
+    let schedule = JSON.parse(localStorage.getItem('sma2_schedule')) || { start: "", end: "", limit: 30 };
+    let appPin = localStorage.getItem('sma2_app_pin') || "1234";
+    let schoolLogoUrl = localStorage.getItem('sma2_school_logo') || "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=250&auto=format&fit=crop";
+
+    // Dynamic Columns State
+    let practiceCols = JSON.parse(localStorage.getItem('sma2_practice_cols')) || ['p1', 'p2', 'p3'];
+    let knowledgeCols = JSON.parse(localStorage.getItem('sma2_knowledge_cols')) || ['t1', 't2', 't3'];
+
+    // Dynamic Class List State
+    let classes = JSON.parse(localStorage.getItem('sma2_classes')) || ["XII.F", "XII.G", "XII.H", "X.A", "X.B", "X.C", "X.D", "X.E"];
+
+    // Authentication States
+    let isAttendanceUnlocked = false;
+    let isRecapUnlocked = false;
+    let isPenilaianUnlocked = false;
+    let isJournalUnlocked = false;
+    let isGuruMenuUnlocked = false;
+    
+    // Penilaian Editing State
+    let isEditingScores = false;
+
+    // Temporary Variable for Add/Edit
+    let currentEditingQuestionIndex = -1;
+    let currentEditingMaterialIndex = -1;
+
+    // Timer Variables
+    let quizInterval;
+    let quizTimeRemaining = 0;
+
+    // --- MAIN INITIALIZATION ON LOAD ---
+    window.onload = function() {
+      // Set initial values
+      document.getElementById('attendance-date').valueAsDate = new Date();
+      document.getElementById('recap-month').value = new Date().toISOString().substring(0, 7);
+      document.getElementById('journal-date').valueAsDate = new Date();
+      document.getElementById('school-logo').src = schoolLogoUrl;
+
+      // Render Dynamic Class Dropdowns
+      renderClassSelects();
+
+      // Initialize Icons
+      lucide.createIcons();
+
+      // Load initial layouts
+      updateQuizStudents();
+      updateQuizGroupSelects();
+      selectMaterial();
+      renderMaterialDropdown();
+      renderJournalHistory();
+      
+      // Auto Lock Pages initially
+      lockAllPages();
+    };
+
+    function lockAllPages() {
+      isAttendanceUnlocked = false;
+      isRecapUnlocked = false;
+      isPenilaianUnlocked = false;
+      isJournalUnlocked = false;
+      
+      document.getElementById('attendance-locked').classList.remove('hidden');
+      document.getElementById('attendance-content').classList.add('hidden');
+      
+      document.getElementById('recap-locked').classList.remove('hidden');
+      document.getElementById('recap-content').classList.add('hidden');
+      
+      document.getElementById('penilaian-locked').classList.remove('hidden');
+      document.getElementById('penilaian-content').classList.add('hidden');
+      
+      document.getElementById('journal-locked').classList.remove('hidden');
+      document.getElementById('journal-content').classList.add('hidden');
+    }
+
+    // --- CLASS DROPDOWN RENDERER ---
+    function renderClassSelects() {
+      const selects = ['class-select', 'recap-class', 'score-class', 'quiz-class', 'journal-class'];
+      const currentValues = selects.reduce((acc, id) => {
+        const el = document.getElementById(id);
+        acc[id] = el ? el.value : "";
+        return acc;
+      }, {});
+
+      selects.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerHTML = "";
+        
+        // Custom default value for Quiz selection
+        if (id === 'quiz-class') {
+          el.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+        }
+        
+        classes.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c;
+          opt.innerText = c;
+          el.appendChild(opt);
+        });
+
+        // Restore previous value if valid
+        if (classes.includes(currentValues[id])) {
+          el.value = currentValues[id];
+        } else if (id === 'quiz-class') {
+          el.value = "";
+        } else {
+          el.selectedIndex = 0;
+        }
+      });
+    }
+
+    // --- TAB NAVIGATION ---
+    function switchPage(pageIndex) {
+      document.querySelectorAll('.page').forEach((page, idx) => {
+        if(idx === pageIndex) page.classList.add('active');
+        else page.classList.remove('active');
+      });
+
+      document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+        if(idx === pageIndex) btn.classList.add('tab-active');
+        else btn.classList.remove('tab-active');
+      });
+
+      // Special triggers on Page Switch
+      if (pageIndex === 0 && isAttendanceUnlocked) loadAttendance();
+      if (pageIndex === 1 && isRecapUnlocked) renderRecap();
+      if (pageIndex === 2 && isPenilaianUnlocked) renderScores();
+      if (pageIndex === 3) {
+        updateQuizStudents();
+        updateQuizGroupSelects();
+      }
+      if (pageIndex === 4) renderMaterialDropdown();
+      if (pageIndex === 5 && isJournalUnlocked) renderJournalHistory();
+    }
+
+    // --- PROFILE PHOTO MODAL ---
+    function showProfilePhotoModal() {
+      document.getElementById('photo-url-input').value = schoolLogoUrl;
+      document.getElementById('photo-modal').classList.remove('hidden');
+    }
+    function closePhotoModal() {
+      document.getElementById('photo-modal').classList.add('hidden');
+    }
+    function savePhotoUrl() {
+      const url = document.getElementById('photo-url-input').value.trim();
+      if(url) {
+        schoolLogoUrl = url;
+        document.getElementById('school-logo').src = url;
+        localStorage.setItem('sma2_school_logo', url);
+        closePhotoModal();
+      }
+    }
+
+    // --- GLOBAL SETTINGS PIN MODAL ---
+    function openSettingsPinModal() {
+      document.getElementById('global-old-pin').value = "";
+      document.getElementById('global-new-pin').value = "";
+      document.getElementById('global-confirm-pin').value = "";
+      document.getElementById('global-pin-error-msg').classList.add('hidden');
+      document.getElementById('settings-pin-modal').classList.remove('hidden');
+      setTimeout(() => lucide.createIcons(), 50);
+    }
+
+    function closeSettingsPinModal() {
+      document.getElementById('settings-pin-modal').classList.add('hidden');
+    }
+
+    // SAVE GLOBAL PIN CHANGE
+    function saveGlobalPinChange() {
+      const oldPin = document.getElementById('global-old-pin').value;
+      const newPin = document.getElementById('global-new-pin').value;
+      const confirmPin = document.getElementById('global-confirm-pin').value;
+      const errorMsg = document.getElementById('global-pin-error-msg');
+
+      if (oldPin !== appPin) {
+        errorMsg.innerText = "PIN Lama tidak sesuai!";
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+      if (newPin.length !== 4 || isNaN(newPin)) {
+        errorMsg.innerText = "PIN baru harus 4 digit angka!";
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+      if (newPin !== confirmPin) {
+        errorMsg.innerText = "Konfirmasi PIN baru tidak cocok!";
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      appPin = newPin;
+      localStorage.setItem('sma2_app_pin', appPin);
+      alert("PIN Akses Guru berhasil diubah menjadi: " + newPin);
+      closeSettingsPinModal();
+    }
+
+    // --- CLASS MANAGEMENT LOGIC ---
+    function openClassManagementModal() {
+      renderClassListInModal();
+      document.getElementById('class-modal').classList.remove('hidden');
+      setTimeout(() => lucide.createIcons(), 50);
+    }
+
+    function closeClassModal() {
+      document.getElementById('class-modal').classList.add('hidden');
+    }
+
+    function renderClassListInModal() {
+      const container = document.getElementById('class-list-container');
+      container.innerHTML = "";
+      classes.forEach((c, idx) => {
+        const div = document.createElement('div');
+        div.className = "flex justify-between items-center bg-white p-2.5 rounded-lg border border-gray-200 text-sm shadow-sm";
+        div.innerHTML = `
+          <span class="font-bold text-gray-800">${c}</span>
+          <div class="flex gap-2">
+            <button onclick="editClassPrompt(${idx})" class="text-blue-600 hover:text-blue-800 transition p-1" title="Ubah Nama Kelas">✏️</button>
+            <button onclick="deleteClass(${idx})" class="text-red-500 hover:text-red-700 transition p-1" title="Hapus Kelas">🗑</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function addNewClassPrompt() {
+      const className = prompt("Masukkan nama kelas baru (contoh: XI.A):");
+      if (!className) return;
+      const trimmed = className.trim().toUpperCase();
+      if (!trimmed) return;
+      if (classes.includes(trimmed)) {
+        alert("Nama kelas tersebut sudah terdaftar!");
+        return;
+      }
+      classes.push(trimmed);
+      localStorage.setItem('sma2_classes', JSON.stringify(classes));
+      renderClassSelects();
+      if (!document.getElementById('class-modal').classList.contains('hidden')) {
+        renderClassListInModal();
+      }
+      alert(`Kelas ${trimmed} berhasil ditambahkan!`);
+    }
+
+    function editClassPrompt(idx) {
+      const oldName = classes[idx];
+      const newName = prompt(`Ubah nama kelas "${oldName}" menjadi:`, oldName);
+      if (!newName) return;
+      const trimmed = newName.trim().toUpperCase();
+      if (!trimmed || trimmed === oldName) return;
+      if (classes.includes(trimmed)) {
+        alert("Kelas dengan nama tersebut sudah terdaftar di sistem!");
+        return;
+      }
+
+      // Update student references
+      students.forEach(s => {
+        if (s.class === oldName) s.class = trimmed;
+      });
+      localStorage.setItem('sma2_students', JSON.stringify(students));
+
+      // Update attendance references
+      Object.keys(attendanceData).forEach(date => {
+        if (attendanceData[date][oldName]) {
+          attendanceData[date][trimmed] = attendanceData[date][oldName];
+          delete attendanceData[date][oldName];
+        }
+      });
+      localStorage.setItem('sma2_attendance', JSON.stringify(attendanceData));
+
+      // Update class state
+      classes[idx] = trimmed;
+      localStorage.setItem('sma2_classes', JSON.stringify(classes));
+
+      renderClassSelects();
+      renderClassListInModal();
+      alert(`Kelas "${oldName}" berhasil diubah menjadi "${trimmed}"`);
+    }
+
+    function deleteClass(idx) {
+      const className = classes[idx];
+      if (confirm(`Apakah Anda yakin ingin menghapus kelas "${className}"? Semua riwayat absensi kelas ini akan hilang.`)) {
+        if (confirm(`Hapus juga seluruh siswa yang terdaftar di dalam kelas "${className}"?`)) {
+          students = students.filter(s => s.class !== className);
+          localStorage.setItem('sma2_students', JSON.stringify(students));
+        }
+        classes.splice(idx, 1);
+        localStorage.setItem('sma2_classes', JSON.stringify(classes));
+        renderClassSelects();
+        renderClassListInModal();
+        loadAttendance();
+        alert(`Kelas ${className} berhasil dihapus.`);
+      }
+    }
+
+    // --- SECURITY PIN CHECKERS ---
+    function openGuruAccess() {
+      document.getElementById('pin-screen').classList.remove('hidden');
+      document.getElementById('pin-login-section').classList.remove('hidden');
+      document.getElementById('pin-menu-section').classList.add('hidden');
+      document.getElementById('pin-settings-section').classList.add('hidden');
+      document.getElementById('pin-question-section').classList.add('hidden');
+      document.getElementById('pin-material-section').classList.add('hidden');
+      document.getElementById('pin-input').value = "";
+      document.getElementById('pin-error').classList.add('hidden');
+      document.getElementById('pin-title').innerText = "Akses Guru / Kelola";
+      document.getElementById('pin-subtitle').innerText = "Silakan masukkan PIN Guru";
+      setTimeout(() => lucide.createIcons(), 50);
+    }
+
+    function closePinScreen() {
+      document.getElementById('pin-screen').classList.add('hidden');
+    }
+
+    // PIN CHECK
+    function checkPin() {
+      const enteredPin = document.getElementById('pin-input').value;
+      if (enteredPin === appPin) {
+        isGuruMenuUnlocked = true;
+        showPinMenu();
+      } else {
+        document.getElementById('pin-error').classList.remove('hidden');
+      }
+    }
+
+    function showPinMenu() {
+      document.getElementById('pin-login-section').classList.add('hidden');
+      document.getElementById('pin-settings-section').classList.add('hidden');
+      document.getElementById('pin-question-section').classList.add('hidden');
+      document.getElementById('pin-material-section').classList.add('hidden');
+      document.getElementById('pin-menu-section').classList.remove('hidden');
+      document.getElementById('pin-title').innerText = "Panel Kontrol Guru";
+      document.getElementById('pin-subtitle').innerText = "Kelola sistem, soal, penjadwalan & materi";
+    }
+
+    function logoutPin() {
+      isGuruMenuUnlocked = false;
+      closePinScreen();
+    }
+
+    function showPinSettings() {
+      document.getElementById('pin-menu-section').classList.add('hidden');
+      document.getElementById('pin-settings-section').classList.remove('hidden');
+      document.getElementById('old-pin').value = "";
+      document.getElementById('new-pin').value = "";
+      document.getElementById('confirm-pin').value = "";
+      document.getElementById('pin-settings-error').classList.add('hidden');
+    }
+
+    function savePinSettings() {
+      const oldPin = document.getElementById('old-pin').value;
+      const newPin = document.getElementById('new-pin').value;
+      const confirmPin = document.getElementById('confirm-pin').value;
+      const errorMsg = document.getElementById('pin-settings-error');
+
+      if (oldPin !== appPin) {
+        errorMsg.innerText = "PIN Lama tidak sesuai!";
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+      if (newPin.length !== 4 || isNaN(newPin)) {
+        errorMsg.innerText = "PIN baru harus 4 digit angka!";
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+      if (newPin !== confirmPin) {
+        errorMsg.innerText = "Konfirmasi PIN baru tidak sesuai!";
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      appPin = newPin;
+      localStorage.setItem('sma2_app_pin', appPin);
+      showPinMenu();
+    }
+
+    // --- SECURE PAGE AUTHENTICATIONS ---
+    function checkAttendancePin() {
+      const entered = document.getElementById('attendance-pin-input').value;
+      if(entered === appPin) {
+        isAttendanceUnlocked = true;
+        document.getElementById('attendance-locked').classList.add('hidden');
+        document.getElementById('attendance-content').classList.remove('hidden');
+        loadAttendance();
+        setTimeout(() => lucide.createIcons(), 50);
+      } else {
+        const err = document.getElementById('attendance-pin-error');
+        err.classList.remove('hidden');
+      }
+    }
+    function lockAttendance() {
+      isAttendanceUnlocked = false;
+      document.getElementById('attendance-locked').classList.remove('hidden');
+      document.getElementById('attendance-content').classList.add('hidden');
+      document.getElementById('attendance-pin-input').value = "";
+    }
+
+    // REKAP LOCKERS
+    function checkRecapPin() {
+      const entered = document.getElementById('recap-pin-input').value;
+      if(entered === appPin) {
+        isRecapUnlocked = true;
+        document.getElementById('recap-locked').classList.add('hidden');
+        document.getElementById('recap-content').classList.remove('hidden');
+        renderRecap();
+        setTimeout(() => lucide.createIcons(), 50);
+      } else {
+        document.getElementById('recap-pin-error').classList.remove('hidden');
+      }
+    }
+    function lockRecap() {
+      isRecapUnlocked = false;
+      document.getElementById('recap-locked').classList.remove('hidden');
+      document.getElementById('recap-content').classList.add('hidden');
+      document.getElementById('recap-pin-input').value = "";
+    }
+
+    // PENILAIAN LOCKERS
+    function checkPenilaianPin() {
+      const entered = document.getElementById('penilaian-pin-input').value;
+      if(entered === appPin) {
+        isPenilaianUnlocked = true;
+        document.getElementById('penilaian-locked').classList.add('hidden');
+        document.getElementById('penilaian-content').classList.remove('hidden');
+        renderScores();
+        setTimeout(() => lucide.createIcons(), 50);
+      } else {
+        document.getElementById('penilaian-pin-error').classList.remove('hidden');
+      }
+    }
+    function lockPenilaian() {
+      isPenilaianUnlocked = false;
+      isEditingScores = false;
+      document.getElementById('penilaian-locked').classList.remove('hidden');
+      document.getElementById('penilaian-content').classList.add('hidden');
+      document.getElementById('penilaian-pin-input').value = "";
+      
+      // Reset button state
+      const btn = document.getElementById('btn-edit-scores');
+      if (btn) {
+        btn.innerHTML = `<i data-lucide="edit-3" class="w-4 h-4"></i> Edit Nilai`;
+        btn.className = "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1 shadow";
+      }
+    }
+
+    function checkJournalPin() {
+      const entered = document.getElementById('journal-pin-input').value;
+      if(entered === appPin) {
+        isJournalUnlocked = true;
+        document.getElementById('journal-locked').classList.add('hidden');
+        document.getElementById('journal-content').classList.remove('hidden');
+        renderJournalHistory();
+        setTimeout(() => lucide.createIcons(), 50);
+      } else {
+        document.getElementById('journal-pin-error').classList.remove('hidden');
+      }
+    }
+    function lockJournal() {
+      isJournalUnlocked = false;
+      document.getElementById('journal-locked').classList.remove('hidden');
+      document.getElementById('journal-content').classList.add('hidden');
+      document.getElementById('journal-pin-input').value = "";
+    }
+
+    // --- PAGE 0: ABSENSI LOGIC ---
+    function loadAttendance() {
+      if(!isAttendanceUnlocked) return;
+      const cls = document.getElementById('class-select').value;
+      const date = document.getElementById('attendance-date').value;
+      const filteredStudents = students.filter(s => s.class === cls);
+      const tbody = document.getElementById('attendance-body');
+      tbody.innerHTML = "";
+
+      const currentDayData = attendanceData[date]?.[cls] || {};
+
+      filteredStudents.forEach((student, index) => {
+        const studentStatus = currentDayData[student.name]?.status || "H";
+        const studentNote = currentDayData[student.name]?.note || "";
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-amber-50/50 transition";
+        tr.innerHTML = `
+          <td class="p-3 font-semibold text-gray-500">${index + 1}</td>
+          <td class="p-3 font-medium text-gray-800">${student.name}</td>
+          <td class="p-3 text-center"><input type="radio" name="status-${index}" value="H" ${studentStatus === 'H' ? 'checked' : ''} class="w-4 h-4 text-orange-600 focus:ring-orange-500"></td>
+          <td class="p-3 text-center"><input type="radio" name="status-${index}" value="S" ${studentStatus === 'S' ? 'checked' : ''} class="w-4 h-4 text-blue-600 focus:ring-blue-500"></td>
+          <td class="p-3 text-center"><input type="radio" name="status-${index}" value="I" ${studentStatus === 'I' ? 'checked' : ''} class="w-4 h-4 text-yellow-600 focus:ring-yellow-500"></td>
+          <td class="p-3 text-center"><input type="radio" name="status-${index}" value="A" ${studentStatus === 'A' ? 'checked' : ''} class="w-4 h-4 text-red-600 focus:ring-red-500"></td>
+          <td class="p-3 text-center"><input type="radio" name="status-${index}" value="TS" ${studentStatus === 'TS' ? 'checked' : ''} class="w-4 h-4 text-purple-600 focus:ring-purple-500"></td>
+          <td class="p-3"><input type="text" id="note-${index}" value="${studentNote}" placeholder="Catatan tambahan..." class="border border-gray-200 rounded px-2 py-1 text-xs w-full focus:outline-none focus:ring-1 focus:ring-orange-500"></td>
+          <td class="p-3 text-center"><button onclick="deleteStudent('${student.name}', '${cls}')" class="text-red-500 hover:text-red-700 transition" title="Hapus Siswa">🗑</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function setAllHadir() {
+      const rows = document.getElementById('attendance-body').querySelectorAll('tr');
+      rows.forEach((row, index) => {
+        const radioHadir = row.querySelector(`input[name="status-${index}"][value="H"]`);
+        if(radioHadir) radioHadir.checked = true;
+      });
+    }
+
+    function saveAttendance() {
+      const cls = document.getElementById('class-select').value;
+      const date = document.getElementById('attendance-date').value;
+      if (!date) return;
+
+      const filteredStudents = students.filter(s => s.class === cls);
+      if(!attendanceData[date]) attendanceData[date] = {};
+      attendanceData[date][cls] = {};
+
+      filteredStudents.forEach((student, index) => {
+        const selectedRadio = document.querySelector(`input[name="status-${index}"]:checked`);
+        const status = selectedRadio ? selectedRadio.value : "H";
+        const note = document.getElementById(`note-${index}`).value.trim();
+
+        attendanceData[date][cls][student.name] = { status, note };
+      });
+
+      localStorage.setItem('sma2_attendance', JSON.stringify(attendanceData));
+      
+      const indicator = document.getElementById('save-indicator');
+      indicator.classList.remove('hidden');
+      setTimeout(() => indicator.classList.add('hidden'), 2000);
+    }
+
+    function addStudent() {
+      const nameInput = document.getElementById('new-student-name');
+      const name = nameInput.value.trim();
+      const cls = document.getElementById('class-select').value;
+
+      if (!name) return;
+      if (students.find(s => s.name.toLowerCase() === name.toLowerCase() && s.class === cls)) {
+        alert("Siswa dengan nama tersebut sudah ada di kelas " + cls);
+        return;
+      }
+
+      students.push({ name, class: cls });
+      localStorage.setItem('sma2_students', JSON.stringify(students));
+      nameInput.value = "";
+      loadAttendance();
+    }
+
+    function deleteStudent(name, cls) {
+      if(confirm(`Apakah Anda yakin ingin menghapus siswa bernama ${name} dari kelas ${cls}?`)) {
+        students = students.filter(s => !(s.name === name && s.class === cls));
+        localStorage.setItem('sma2_students', JSON.stringify(students));
+        loadAttendance();
+      }
+    }
+
+    // Excel Parser
+    function importStudentData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+        let addedCount = 0;
+        jsonData.forEach(row => {
+          const name = row.Nama || row.nama || row['Nama Lengkap'] || row['Nama Siswa'];
+          const cls = row.Kelas || row.kelas || document.getElementById('class-select').value;
+          
+          if(name && cls) {
+            if(!students.find(s => s.name.toLowerCase() === name.trim().toLowerCase() && s.class === cls.trim())) {
+              students.push({ name: name.trim(), class: cls.trim() });
+              addedCount++;
+            }
+          }
+        });
+
+        if (addedCount > 0) {
+          localStorage.setItem('sma2_students', JSON.stringify(students));
+          alert(`Berhasil mengimpor ${addedCount} data siswa!`);
+          loadAttendance();
+        } else {
+          alert("Tidak ada data siswa baru yang diimpor. Pastikan kolom bertajuk 'Nama' dan 'Kelas'.");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // --- PAGE 1: REKAP ABSEN LOGIC ---
+    function renderRecap() {
+      if(!isRecapUnlocked) return;
+      const cls = document.getElementById('recap-class').value;
+      const monthStr = document.getElementById('recap-month').value; // YYYY-MM
+      const filteredStudents = students.filter(s => s.class === cls);
+      const tbody = document.getElementById('recap-body');
+      tbody.innerHTML = "";
+
+      filteredStudents.forEach((student, index) => {
+        let counts = { H: 0, S: 0, I: 0, A: 0, TS: 0 };
+
+        // hitung rekap dalam 1 bulan
+        Object.keys(attendanceData).forEach(date => {
+          if (date.startsWith(monthStr)) {
+            const dayStatus = attendanceData[date]?.[cls]?.[student.name]?.status;
+            if (dayStatus && counts[dayStatus] !== undefined) {
+              counts[dayStatus]++;
+            }
+          }
+        });
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-amber-50/50 transition";
+        tr.innerHTML = `
+          <td class="p-3 font-semibold text-gray-500">${index + 1}</td>
+          <td class="p-3 font-medium text-gray-800">${student.name}</td>
+          <td class="p-3 text-center font-bold text-green-600">${counts.H}</td>
+          <td class="p-3 text-center font-bold text-blue-600">${counts.S}</td>
+          <td class="p-3 text-center font-bold text-yellow-600">${counts.I}</td>
+          <td class="p-3 text-center font-bold text-red-600">${counts.A}</td>
+          <td class="p-3 text-center font-bold text-purple-600">${counts.TS}</td>
+          <td class="p-3 text-center"><button onclick="clearRecapForStudent('${student.name}', '${cls}', '${monthStr}')" class="text-red-500 hover:text-red-700 font-semibold" title="Reset Absen Bulan Ini">Reset</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function clearRecapForStudent(name, cls, monthStr) {
+      if (confirm(`Hapus data kehadiran untuk ${name} pada bulan ${monthStr}?`)) {
+        Object.keys(attendanceData).forEach(date => {
+          if (date.startsWith(monthStr)) {
+            if (attendanceData[date]?.[cls]?.[name]) {
+              delete attendanceData[date][cls][name];
+            }
+          }
+        });
+        localStorage.setItem('sma2_attendance', JSON.stringify(attendanceData));
+        renderRecap();
+      }
+    }
+
+    // DOWNLOAD RECAP
+    function downloadRecapAbsen() {
+      const cls = document.getElementById('recap-class').value;
+      const monthStr = document.getElementById('recap-month').value;
+      const filteredStudents = students.filter(s => s.class === cls);
+      
+      const data = filteredStudents.map((student, idx) => {
+        let counts = { H: 0, S: 0, I: 0, A: 0, TS: 0 };
+        Object.keys(attendanceData).forEach(date => {
+          if (date.startsWith(monthStr)) {
+            const dayStatus = attendanceData[date]?.[cls]?.[student.name]?.status;
+            if (dayStatus && counts[dayStatus] !== undefined) counts[dayStatus]++;
+          }
+        });
+        return {
+          "No": idx + 1,
+          "Nama Siswa": student.name,
+          "Hadir (H)": counts.H,
+          "Sakit (S)": counts.S,
+          "Izin (I)": counts.I,
+          "Alfa (A)": counts.A,
+          "Terlambat Sekali (TS)": counts.TS
+        };
+      });
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Rekap Absen");
+      XLSX.writeFile(wb, `Rekap_Absen_${cls}_${monthStr}.xlsx`);
+    }
+
+    // --- PAGE 2: PENILAIAN LOGIC ---
+    function toggleEditScores() {
+      isEditingScores = !isEditingScores;
+      const btn = document.getElementById('btn-edit-scores');
+      if (isEditingScores) {
+        btn.innerHTML = `<i data-lucide="x" class="w-4 h-4"></i> Batal Edit`;
+        btn.className = "bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1 shadow";
+      } else {
+        btn.innerHTML = `<i data-lucide="edit-3" class="w-4 h-4"></i> Edit Nilai`;
+        btn.className = "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1 shadow";
+        // Reload original non-saved scores
+        scoresData = JSON.parse(localStorage.getItem('sma2_scores')) || {};
+      }
+      renderScores();
+      lucide.createIcons();
+    }
+
+    // Add Dynamic Practice Columns (P4, P5, ...)
+    function addPracticeColumn() {
+      const nextIdx = practiceCols.length + 1;
+      practiceCols.push(`p${nextIdx}`);
+      localStorage.setItem('sma2_practice_cols', JSON.stringify(practiceCols));
+      renderScores();
+      alert(`Berhasil menambahkan kolom penilaian Praktik baru (P${nextIdx})!`);
+    }
+
+    // Remove Last Practice Column
+    function removePracticeColumn() {
+      if (practiceCols.length <= 1) {
+        alert("Minimal harus disisakan 1 kolom Kategori Praktik!");
+        return;
+      }
+      const removedCol = practiceCols.pop();
+      localStorage.setItem('sma2_practice_cols', JSON.stringify(practiceCols));
+      
+      // Clean up score values in removed column to free localStorage space
+      students.forEach(student => {
+        if (scoresData[student.name] && scoresData[student.name][removedCol] !== undefined) {
+          delete scoresData[student.name][removedCol];
+        }
+      });
+      localStorage.setItem('sma2_scores', JSON.stringify(scoresData));
+      
+      renderScores();
+      alert(`Berhasil menghapus kolom penilaian Praktik terakhir (${removedCol.toUpperCase()})!`);
+    }
+
+    // Add Dynamic Knowledge Columns (T4, T5, ...)
+    function addKnowledgeColumn() {
+      const nextIdx = knowledgeCols.length + 1;
+      knowledgeCols.push(`t${nextIdx}`);
+      localStorage.setItem('sma2_knowledge_cols', JSON.stringify(knowledgeCols));
+      renderScores();
+      alert(`Berhasil menambahkan kolom penilaian Pengetahuan baru (T${nextIdx})!`);
+    }
+
+    // Remove Last Knowledge Column
+    function removeKnowledgeColumn() {
+      if (knowledgeCols.length <= 1) {
+        alert("Minimal harus disisakan 1 kolom Kategori Pengetahuan!");
+        return;
+      }
+      const removedCol = knowledgeCols.pop();
+      localStorage.setItem('sma2_knowledge_cols', JSON.stringify(knowledgeCols));
+      
+      // Clean up score values in removed column
+      students.forEach(student => {
+        if (scoresData[student.name] && scoresData[student.name][removedCol] !== undefined) {
+          delete scoresData[student.name][removedCol];
+        }
+      });
+      localStorage.setItem('sma2_scores', JSON.stringify(scoresData));
+      
+      renderScores();
+      alert(`Berhasil menghapus kolom penilaian Pengetahuan terakhir (${removedCol.toUpperCase()})!`);
+    }
+
+    function renderScores() {
+      if(!isPenilaianUnlocked) return;
+      const cls = document.getElementById('score-class').value;
+      const filteredStudents = students.filter(s => s.class === cls);
+      const thead = document.getElementById('score-thead');
+      const tbody = document.getElementById('score-body');
+
+      // Setup Headers dynamically based on active categories
+      thead.innerHTML = `
+        <tr class="bg-gray-100 border-b border-gray-200">
+          <th class="p-3 text-left w-12" rowspan="2">No</th>
+          <th class="p-3 text-left" rowspan="2">Nama Siswa</th>
+          <th class="p-3 text-center col-header-practice text-amber-950 font-bold" colspan="${practiceCols.length}">Kategori Praktik</th>
+          <th class="p-3 text-center col-header-knowledge text-amber-950 font-bold" colspan="${knowledgeCols.length}">Kategori Pengetahuan</th>
+          <th class="p-3 text-center col-header-quiz text-amber-950 font-bold" colspan="2">Quiz & UTS</th>
+          <th class="p-3 text-center w-24 bg-orange-200 text-orange-950 font-bold" rowspan="2">Rata-Rata</th>
+        </tr>
+        <tr class="bg-gray-50 border-b border-gray-200 text-[10px] text-gray-600">
+          ${practiceCols.map(col => `<th class="p-2 text-center col-practice w-14 font-bold">${col.toUpperCase()}</th>`).join('')}
+          ${knowledgeCols.map(col => `<th class="p-2 text-center col-knowledge w-14 font-bold">${col.toUpperCase()}</th>`).join('')}
+          <th class="p-2 text-center col-quiz w-14 font-bold">Q1</th>
+          <th class="p-2 text-center col-quiz w-14 font-bold">UTS</th>
+        </tr>
+      `;
+
+      tbody.innerHTML = "";
+      filteredStudents.forEach((student, idx) => {
+        const scores = scoresData[student.name] || {};
+        
+        // Calculate Average across all dynamic categories + static ones
+        const scoreKeys = [...practiceCols, ...knowledgeCols, 'q1', 'uts'];
+        const validScores = scoreKeys.map(k => parseFloat(scores[k])).filter(v => !isNaN(v));
+        const avg = validScores.length > 0 ? (validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(1) : "-";
+
+        const isEdit = isEditingScores;
+        
+        // Generate practice input td
+        let practiceCells = practiceCols.map(col => `
+          <td class="p-1 col-practice text-center">
+            ${isEdit ? `<input type="number" min="0" max="100" class="w-full bg-transparent text-center focus:outline-none" value="${scores[col] || ''}" onchange="updateTempScore('${student.name}', '${col}', this.value)">` : `<span class="font-medium text-amber-900">${scores[col] || '-'}</span>`}
+          </td>
+        `).join('');
+
+        // Generate knowledge input td
+        let knowledgeCells = knowledgeCols.map(col => `
+          <td class="p-1 col-knowledge text-center">
+            ${isEdit ? `<input type="number" min="0" max="100" class="w-full bg-transparent text-center focus:outline-none" value="${scores[col] || ''}" onchange="updateTempScore('${student.name}', '${col}', this.value)">` : `<span class="font-medium text-amber-900">${scores[col] || '-'}</span>`}
+          </td>
+        `).join('');
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-amber-50/50 transition";
+        tr.innerHTML = `
+          <td class="p-3 font-semibold text-gray-500">${idx + 1}</td>
+          <td class="p-3 font-medium text-gray-800">${student.name}</td>
+          
+          ${practiceCells}
+          ${knowledgeCells}
+          
+          <td class="p-1 col-quiz text-center">
+            ${isEdit ? `<input type="number" min="0" max="100" class="w-full bg-transparent text-center focus:outline-none" value="${scores.q1 || ''}" onchange="updateTempScore('${student.name}', 'q1', this.value)">` : `<span class="font-medium text-amber-900">${scores.q1 || '-'}</span>`}
+          </td>
+          <td class="p-1 col-quiz text-center">
+            ${isEdit ? `<input type="number" min="0" max="100" class="w-full bg-transparent text-center focus:outline-none" value="${scores.uts || ''}" onchange="updateTempScore('${student.name}', 'uts', this.value)">` : `<span class="font-medium text-amber-900">${scores.uts || '-'}</span>`}
+          </td>
+          
+          <td class="p-3 text-center font-bold bg-orange-100 text-orange-950">${avg}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updateTempScore(studentName, key, value) {
+      if(!scoresData[studentName]) scoresData[studentName] = {};
+      scoresData[studentName][key] = value;
+    }
+
+    function saveScores() {
+      localStorage.setItem('sma2_scores', JSON.stringify(scoresData));
+      alert("Berhasil menyimpan semua nilai siswa!");
+      isEditingScores = false;
+      const btn = document.getElementById('btn-edit-scores');
+      if (btn) {
+        btn.innerHTML = `<i data-lucide="edit-3" class="w-4 h-4"></i> Edit Nilai`;
+        btn.className = "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1 shadow";
+      }
+      renderScores();
+      lucide.createIcons();
+    }
+
+    function downloadScores() {
+      const cls = document.getElementById('score-class').value;
+      const filteredStudents = students.filter(s => s.class === cls);
+
+      const data = filteredStudents.map((student, idx) => {
+        const scores = scoresData[student.name] || {};
+        const scoreKeys = [...practiceCols, ...knowledgeCols, 'q1', 'uts'];
+        const validScores = scoreKeys.map(k => parseFloat(scores[k])).filter(v => !isNaN(v));
+        const avg = validScores.length > 0 ? (validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(1) : "-";
+
+        const rowData = {
+          "No": idx + 1,
+          "Nama Siswa": student.name
+        };
+
+        // Export practice columns dynamically
+        practiceCols.forEach((col, cIdx) => {
+          rowData[`${col.toUpperCase()} (Praktik ${cIdx + 1})`] = scores[col] || 0;
+        });
+
+        // Export knowledge columns dynamically
+        knowledgeCols.forEach((col, cIdx) => {
+          rowData[`${col.toUpperCase()} (Tugas ${cIdx + 1})`] = scores[col] || 0;
+        });
+
+        rowData["Q1 (Quiz 1)"] = scores.q1 || 0;
+        rowData["UTS"] = scores.uts || 0;
+        rowData["Nilai Rata-rata"] = avg;
+
+        return rowData;
+      });
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Rekap Nilai");
+      XLSX.writeFile(wb, `Rekap_Nilai_${cls}.xlsx`);
+    }
+
+    // --- PAGE 3: QUIZ & QUESTION BANK ---
+    function updateQuizStudents() {
+      const cls = document.getElementById('quiz-class').value;
+      const select = document.getElementById('quiz-student');
+      select.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+
+      if (cls) {
+        const filtered = students.filter(s => s.class === cls);
+        filtered.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.name;
+          opt.innerText = s.name;
+          select.appendChild(opt);
+        });
+      }
+    }
+
+    // UPDATE GROUPS
+    function updateQuizGroupSelects() {
+      const groups = [...new Set(questions.map(q => q.group).filter(g => g))];
+      const select = document.getElementById('quiz-group');
+
+      select.innerHTML = '<option value="">Semua Kategori</option>';
+      groups.forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g;
+        opt.innerText = g;
+        select.appendChild(opt);
+      });
+    }
+
+    function startQuiz() {
+      const cls = document.getElementById('quiz-class').value;
+      const studentName = document.getElementById('quiz-student').value;
+      const groupFilter = document.getElementById('quiz-group').value;
+
+      if (!cls || !studentName) {
+        alert("Silakan pilih Kelas dan Nama Anda terlebih dahulu!");
+        return;
+      }
+
+      // Check Penjadwalan Quiz
+      const now = new Date();
+      if(schedule.start && now < new Date(schedule.start)) {
+        alert("Quiz belum dimulai! Sesuai jadwal baru dibuka: " + new Date(schedule.start).toLocaleString());
+        return;
+      }
+      if(schedule.end && now > new Date(schedule.end)) {
+        alert("Quiz sudah ditutup! Batas akhir adalah: " + new Date(schedule.end).toLocaleString());
+        return;
+      }
+
+      // Filter Questions
+      let filteredQuestions = questions;
+      if (groupFilter) {
+        filteredQuestions = questions.filter(q => q.group === groupFilter);
+      }
+
+      if (filteredQuestions.length === 0) {
+        alert("Tidak ada soal tersedia untuk kategori yang dipilih.");
+        return;
+      }
+
+      // Initialize Area pengerjaan
+      const quizArea = document.getElementById('quiz-area');
+      quizArea.classList.remove('hidden');
+      quizArea.innerHTML = "";
+
+      const timerArea = document.getElementById('quiz-timer-area');
+      timerArea.classList.remove('hidden');
+
+      // Start Timer
+      let totalMinutes = schedule.limit || 30;
+      quizTimeRemaining = totalMinutes * 60;
+      updateTimerDisplay();
+
+      clearInterval(quizInterval);
+      quizInterval = setInterval(() => {
+        quizTimeRemaining--;
+        updateTimerDisplay();
+        if(quizTimeRemaining <= 0) {
+          clearInterval(quizInterval);
+          alert("Waktu pengerjaan habis! Hasil pengerjaan Anda akan langsung disimpan.");
+          submitQuiz(filteredQuestions, studentName);
+        }
+      }, 1000);
+
+      // Render Questions
+      filteredQuestions.forEach((q, qIndex) => {
+        const qBox = document.createElement('div');
+        qBox.className = "mb-6 bg-white p-4 rounded-lg shadow-sm border border-orange-100";
+        
+        let choicesHtml = "";
+        Object.keys(q.choices).forEach(key => {
+          if (q.choices[key]) {
+            choicesHtml += `
+              <label class="flex items-center gap-2 p-2 rounded hover:bg-orange-50 cursor-pointer transition">
+                <input type="radio" name="quiz-ans-${qIndex}" value="${key}" class="w-4 h-4 text-orange-600">
+                <span class="font-bold text-orange-800">${key}.</span>
+                <span>${q.choices[key]}</span>
+              </label>
+            `;
+          }
+        });
+
+        qBox.innerHTML = `
+          <p class="font-semibold text-gray-800 mb-3">${qIndex + 1}. ${q.text}</p>
+          <div class="space-y-1">${choicesHtml}</div>
+        `;
+        quizArea.appendChild(qBox);
+      });
+
+      // Submit Button
+      const submitBtn = document.createElement('button');
+      submitBtn.className = "bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold px-6 py-3 rounded-lg shadow mt-4 hover:opacity-90 transition";
+      submitBtn.innerText = "Kirim Hasil Jawaban";
+      submitBtn.onclick = () => {
+        if(confirm("Apakah Anda yakin telah selesai dan ingin mengumpulkan jawaban?")) {
+          clearInterval(quizInterval);
+          submitQuiz(filteredQuestions, studentName);
+        }
+      };
+      quizArea.appendChild(submitBtn);
+    }
+
+    function updateTimerDisplay() {
+      const minutes = Math.floor(quizTimeRemaining / 60);
+      const seconds = quizTimeRemaining % 60;
+      document.getElementById('quiz-timer').innerText = 
+        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function submitQuiz(questionsList, studentName) {
+      let correctCount = 0;
+      questionsList.forEach((q, qIndex) => {
+        const selected = document.querySelector(`input[name="quiz-ans-${qIndex}"]:checked`);
+        if (selected && selected.value === q.answer) {
+          correctCount++;
+        }
+      });
+
+      const finalScore = Math.round((correctCount / questionsList.length) * 100);
+      
+      // Save to Scores
+      if(!scoresData[studentName]) {
+        scoresData[studentName] = {};
+      }
+      scoresData[studentName].q1 = finalScore;
+      localStorage.setItem('sma2_scores', JSON.stringify(scoresData));
+
+      // Reset and Alert Area
+      document.getElementById('quiz-area').innerHTML = `
+        <div class="text-center py-8">
+          <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i data-lucide="check-circle" class="w-12 h-12 text-green-600"></i>
+          </div>
+          <h3 class="font-bold text-2xl text-green-800 mb-2">Quiz Selesai!</h3>
+          <p class="text-gray-600 mb-4">Selamat <strong>${studentName}</strong>, jawaban Anda telah terekam.</p>
+          <div class="inline-block bg-orange-100 border border-orange-200 px-6 py-3 rounded-xl">
+            <span class="text-sm text-amber-900 block font-medium">Nilai Akhir Anda</span>
+            <span class="text-4xl font-extrabold text-amber-900">${finalScore}</span>
+          </div>
+        </div>
+      `;
+      document.getElementById('quiz-timer-area').classList.add('hidden');
+      lucide.createIcons();
+    }
+
+    // --- PANEL GURU: MANAGE QUESTION BANK ---
+    function enterQuestionManagement() {
+      document.getElementById('pin-menu-section').classList.add('hidden');
+      document.getElementById('pin-question-section').classList.remove('hidden');
+      renderPinQuestionList();
+
+      // Set Schedule Inputs
+      document.getElementById('quiz-schedule-start').value = schedule.start || "";
+      document.getElementById('quiz-schedule-end').value = schedule.end || "";
+      document.getElementById('quiz-time-limit').value = schedule.limit || 30;
+    }
+
+    function renderPinQuestionList() {
+      const container = document.getElementById('pin-question-list');
+      container.innerHTML = "";
+
+      questions.forEach((q, idx) => {
+        const item = document.createElement('div');
+        item.className = "p-2 bg-gray-50 border rounded flex justify-between items-start gap-2";
+        item.innerHTML = `
+          <div class="flex-1">
+            <span class="bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase">${q.group || 'Umum'}</span>
+            <p class="font-medium text-gray-800 mt-1">${idx+1}. ${q.text}</p>
+          </div>
+          <div class="flex gap-1">
+            <button onclick="editQuestion(${idx})" class="text-blue-600 hover:text-blue-800">✏</button>
+            <button onclick="deleteQuestion(${idx})" class="text-red-600 hover:text-red-800">🗑</button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function addQuestionFromPin() {
+      currentEditingQuestionIndex = -1;
+      document.getElementById('pin-question-form').classList.remove('hidden');
+      document.getElementById('q-text-pin').value = "";
+      document.getElementById('q-a-pin').value = "";
+      document.getElementById('q-b-pin').value = "";
+      document.getElementById('q-c-pin').value = "";
+      document.getElementById('q-d-pin').value = "";
+      document.getElementById('q-e-pin').value = "";
+      document.getElementById('q-answer-pin').value = "A";
+    }
+
+    // CANCEL QUESTION
+    function cancelQuestionFromPin() {
+      document.getElementById('pin-question-form').classList.add('hidden');
+    }
+
+    function saveQuestionFromPin() {
+      const text = document.getElementById('q-text-pin').value.trim();
+      const a = document.getElementById('q-a-pin').value.trim();
+      const b = document.getElementById('q-b-pin').value.trim();
+      const c = document.getElementById('q-c-pin').value.trim();
+      const d = document.getElementById('q-d-pin').value.trim();
+      const e = document.getElementById('q-e-pin').value.trim();
+      const ans = document.getElementById('q-answer-pin').value;
+      const grp = document.getElementById('q-group-input').value.trim() || "Umum";
+
+      if(!text || !a || !b) {
+        alert("Pertanyaan, Pilihan A, dan Pilihan B wajib diisi!");
+        return;
+      }
+
+      const qData = {
+        id: currentEditingQuestionIndex >= 0 ? questions[currentEditingQuestionIndex].id : "q_" + Date.now(),
+        group: grp,
+        text: text,
+        choices: { A: a, B: b, C: c, D: d, E: e },
+        answer: ans
+      };
+
+      if (currentEditingQuestionIndex >= 0) {
+        questions[currentEditingQuestionIndex] = qData;
+      } else {
+        questions.push(qData);
+      }
+
+      localStorage.setItem('sma2_questions', JSON.stringify(questions));
+      document.getElementById('pin-question-form').classList.add('hidden');
+      renderPinQuestionList();
+      updateQuizGroupSelects();
+    }
+
+    function editQuestion(idx) {
+      currentEditingQuestionIndex = idx;
+      const q = questions[idx];
+      document.getElementById('pin-question-form').classList.remove('hidden');
+      document.getElementById('q-text-pin').value = q.text;
+      document.getElementById('q-a-pin').value = q.choices.A || "";
+      document.getElementById('q-b-pin').value = q.choices.B || "";
+      document.getElementById('q-c-pin').value = q.choices.C || "";
+      document.getElementById('q-d-pin').value = q.choices.D || "";
+      document.getElementById('q-e-pin').value = q.choices.E || "";
+      document.getElementById('q-answer-pin').value = q.answer;
+      document.getElementById('q-group-input').value = q.group;
+    }
+
+    function deleteQuestion(idx) {
+      if(confirm("Apakah Anda yakin ingin menghapus soal ini dari bank soal?")) {
+        questions.splice(idx, 1);
+        localStorage.setItem('sma2_questions', JSON.stringify(questions));
+        renderPinQuestionList();
+        updateQuizGroupSelects();
+      }
+    }
+
+    function showDeleteAllQuestionsConfirm() {
+      if(confirm("PERINGATAN! Anda akan menghapus seluruh bank soal yang ada. Lanjutkan?")) {
+        questions = [];
+        localStorage.setItem('sma2_questions', JSON.stringify([]));
+        renderPinQuestionList();
+        updateQuizGroupSelects();
+      }
+    }
+
+    function saveScheduleSettings() {
+      const start = document.getElementById('quiz-schedule-start').value;
+      const end = document.getElementById('quiz-schedule-end').value;
+      const limit = parseInt(document.getElementById('quiz-time-limit').value) || 30;
+
+      schedule = { start, end, limit };
+      localStorage.setItem('sma2_schedule', JSON.stringify(schedule));
+
+      const savedMark = document.getElementById('schedule-saved');
+      savedMark.classList.remove('hidden');
+      setTimeout(() => savedMark.classList.add('hidden'), 2000);
+    }
+
+    // --- PANEL GURU: MATERIAL MANAGEMENT ---
+    function enterMaterialManagement() {
+      document.getElementById('pin-menu-section').classList.add('hidden');
+      document.getElementById('pin-material-section').classList.remove('hidden');
+      renderPinMaterialList();
+    }
+
+    function renderPinMaterialList() {
+      const container = document.getElementById('pin-material-list');
+      container.innerHTML = "";
+
+      materials.forEach((m, idx) => {
+        const item = document.createElement('div');
+        item.className = "p-2 bg-gray-50 border rounded flex justify-between items-start gap-2";
+        item.innerHTML = `
+          <div class="flex-1">
+            <p class="font-bold text-amber-950">${m.title}</p>
+            <p class="text-[10px] text-gray-500 line-clamp-1">${m.content}</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="editMaterial(${idx})" class="text-blue-600 hover:text-blue-800">✏</button>
+            <button onclick="deleteMaterial(${idx})" class="text-red-600 hover:text-red-800">🗑</button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function addMaterialFromPin() {
+      currentEditingMaterialIndex = -1;
+      document.getElementById('pin-material-form').classList.remove('hidden');
+      document.getElementById('m-title-pin').value = "";
+      document.getElementById('m-content-pin').value = "";
+    }
+
+    function cancelMaterialFromPin() {
+      document.getElementById('pin-material-form').classList.add('hidden');
+    }
+
+    function saveMaterialFromPin() {
+      const title = document.getElementById('m-title-pin').value.trim();
+      const content = document.getElementById('m-content-pin').value.trim();
+
+      if(!title || !content) {
+        alert("Judul materi dan Isi materi tidak boleh kosong!");
+        return;
+      }
+
+      const mData = {
+        id: currentEditingMaterialIndex >= 0 ? materials[currentEditingMaterialIndex].id : "m_" + Date.now(),
+        title: title,
+        content: content
+      };
+
+      if (currentEditingMaterialIndex >= 0) {
+        materials[currentEditingMaterialIndex] = mData;
+      } else {
+        materials.push(mData);
+      }
+
+      localStorage.setItem('sma2_materials', JSON.stringify(materials));
+      document.getElementById('pin-material-form').classList.add('hidden');
+      renderPinMaterialList();
+      renderMaterialDropdown();
+    }
+
+    function editMaterial(idx) {
+      currentEditingMaterialIndex = idx;
+      const m = materials[idx];
+      document.getElementById('pin-material-form').classList.remove('hidden');
+      document.getElementById('m-title-pin').value = m.title;
+      document.getElementById('m-content-pin').value = m.content;
+    }
+
+    function deleteMaterial(idx) {
+      if(confirm("Apakah Anda yakin ingin menghapus materi ini?")) {
+        materials.splice(idx, 1);
+        localStorage.setItem('sma2_materials', JSON.stringify(materials));
+        renderPinMaterialList();
+        renderMaterialDropdown();
+      }
+    }
+
+    // DELETE ALL MATERIALS
+    function deleteAllMaterialsConfirm() {
+      if(confirm("PERINGATAN! Anda akan menghapus seluruh konten materi pembelajaran. Lanjutkan?")) {
+        materials = [];
+        localStorage.setItem('sma2_materials', JSON.stringify([]));
+        renderPinMaterialList();
+        renderMaterialDropdown();
+      }
+    }
+
+    function renderMaterialDropdown() {
+      const select = document.getElementById('materi-select');
+      select.innerHTML = '<option value="">-- Pilih Materi Pembelajaran --</option>';
+      materials.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.innerText = m.title;
+        select.appendChild(opt);
+      });
+    }
+
+    function selectMaterial() {
+      const selectedId = document.getElementById('materi-select').value;
+      const contentArea = document.getElementById('material-content');
+      const emptyArea = document.getElementById('material-empty');
+
+      if (!selectedId) {
+        contentArea.classList.add('hidden');
+        emptyArea.classList.remove('hidden');
+        return;
+      }
+
+      const matched = materials.find(m => m.id === selectedId);
+      if(matched) {
+        document.getElementById('material-title').innerText = matched.title;
+        document.getElementById('material-body').innerText = matched.content;
+        contentArea.classList.remove('hidden');
+        emptyArea.classList.add('hidden');
+      }
+    }
+
+    // --- PAGE 5: JURNAL MENGAJAR LOGIC ---
+    function saveJournalEntry() {
+      const name = document.getElementById('journal-name').value.trim();
+      const subject = document.getElementById('journal-subject').value.trim();
+      const semester = document.getElementById('journal-semester').value.trim();
+      const date = document.getElementById('journal-date').value;
+      const cls = document.getElementById('journal-class').value;
+      const period = document.getElementById('journal-period').value.trim();
+      const topic = document.getElementById('journal-topic').value.trim();
+      const obstacles = document.getElementById('journal-obstacles').value.trim();
+      const solution = document.getElementById('journal-solution').value.trim();
+
+      if(!name || !date || !topic) {
+        alert("Nama Guru, Hari/Tanggal, dan Bahasan materi pokok wajib diisi!");
+        return;
+      }
+
+      const entry = {
+        id: "j_" + Date.now(),
+        name, subject, semester, date, cls, period, topic, obstacles, solution
+      };
+
+      journals.push(entry);
+      localStorage.setItem('sma2_journals', JSON.stringify(journals));
+      
+      // Reset input topic dll
+      document.getElementById('journal-topic').value = "";
+      document.getElementById('journal-obstacles').value = "";
+      document.getElementById('journal-solution').value = "";
+
+      alert("Jurnal Mengajar berhasil disimpan!");
+      renderJournalHistory();
+    }
+
+    function renderJournalHistory() {
+      if(!isJournalUnlocked) return;
+      const tbody = document.getElementById('journal-history-body');
+      tbody.innerHTML = "";
+
+      // urutkan dari jurnal terbaru
+      const sorted = [...journals].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      sorted.forEach((j, index) => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-amber-50/50 transition text-gray-800";
+        tr.innerHTML = `
+          <td class="p-3 font-semibold text-gray-500">${index + 1}</td>
+          <td class="p-3 font-medium whitespace-nowrap">${new Date(j.date).toLocaleDateString('id-ID', {weekday: 'long', year: 'numeric', month: 'short', day: 'numeric'})}</td>
+          <td class="p-3 font-bold text-amber-900">${j.cls}</td>
+          <td class="p-3">${j.period || '-'}</td>
+          <td class="p-3 font-medium max-w-xs truncate" title="${j.topic}">${j.topic}</td>
+          <td class="p-3 max-w-xs truncate text-gray-500" title="${j.obstacles || '-'}">${j.obstacles || '-'}</td>
+          <td class="p-3 max-w-xs truncate text-gray-500" title="${j.solution || '-'}">${j.solution || '-'}</td>
+          <td class="p-3 text-center">
+            <button onclick="deleteJournal('${j.id}')" class="text-red-500 hover:text-red-700 font-semibold" title="Hapus Jurnal">Hapus</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function deleteJournal(id) {
+      if(confirm("Apakah Anda yakin ingin menghapus rekaman jurnal ini?")) {
+        journals = journals.filter(j => j.id !== id);
+        localStorage.setItem('sma2_journals', JSON.stringify(journals));
+        renderJournalHistory();
+      }
+    }
+
+    function downloadJournalExcel() {
+      if (journals.length === 0) {
+        alert("Tidak ada riwayat jurnal yang bisa didownload.");
+        return;
+      }
+      
+      const data = journals.map((j, idx) => ({
+        "No": idx + 1,
+        "Nama Guru": j.name,
+        "Mata Pelajaran": j.subject,
+        "Semester": j.semester,
+        "Tanggal": j.date,
+        "Kelas": j.cls,
+        "Jam Ke": j.period,
+        "Bahasan Materi Pokok": j.topic,
+        "Hambatan": j.obstacles,
+        "Pemecahan Masalah": j.solution
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Jurnal Mengajar");
+      XLSX.writeFile(wb, "Rekap_Jurnal_Mengajar_Guru.xlsx");
+    }
+  </script>
+ </body>
+</html>
